@@ -4,6 +4,9 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:math';
+import 'package:mongo_dart/mongo_dart.dart' as mongo;
+import 'dart:io';
+import 'example_words.dart';
 
 void main() {
   runApp(MyApp());
@@ -270,19 +273,6 @@ class _LearnPageState extends State<LearnPage> {
 
   void _generateRandomWord() {
     // List of example words
-    List<String> exampleWords = [
-      'apple',
-      'banana',
-      'orange',
-      'grape',
-      'strawberry',
-      'kiwi',
-      'watermelon',
-      'pineapple',
-      'mango',
-      'peach',
-    ];
-
     // Generate a random index
     int randomIndex = Random().nextInt(exampleWords.length);
 
@@ -442,39 +432,7 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
-  List<Map<String, dynamic>> _questions = [
-    {
-      'question': 'What does the word "ephemeral" mean?',
-      'options': ['Short-lived', 'Eternal', 'Tangible', 'Opaque'],
-      'answer': 'Short-lived',
-    },
-    {
-      'question': 'Which word means "the ability to read and write"?',
-      'options': ['Illiterate', 'Literate', 'Numerate', 'Innumerate'],
-      'answer': 'Literate',
-    },
-    {
-      'question': 'What is the synonym of "ubiquitous"?',
-      'options': ['Scarce', 'Rare', 'Everywhere', 'Singular'],
-      'answer': 'Everywhere',
-    },
-    {
-      'question': 'What does "gregarious" mean?',
-      'options': [
-        'Friendly and outgoing',
-        'Shy and reserved',
-        'Intelligent and wise',
-        'Careless and thoughtless'
-      ],
-      'answer': 'Friendly and outgoing',
-    },
-    {
-      'question': 'Which word means "to make less severe or harsh"?',
-      'options': ['Intensify', 'Aggravate', 'Mitigate', 'Exacerbate'],
-      'answer': 'Mitigate',
-    },
-  ];
-
+  List<Map<String, dynamic>> _questions = [];
   int _currentQuestionIndex = 0;
   bool _showResult = false;
   bool _isCorrect = false;
@@ -501,7 +459,277 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   void _startQuiz() {
+    Random random = Random();
+    int randomIndex = random.nextInt(9);
+    List<List<Map<String, dynamic>>> questionSets = [
+      [
+        {
+          'question': 'What does the word "ephemeral" mean?',
+          'options': ['Short-lived', 'Eternal', 'Tangible', 'Opaque'],
+          'answer': 'Short-lived',
+        },
+        {
+          'question': 'Which word means "the ability to read and write"?',
+          'options': ['Illiterate', 'Literate', 'Numerate', 'Innumerate'],
+          'answer': 'Literate',
+        },
+        {
+          'question': 'What is the synonym of "ubiquitous"?',
+          'options': ['Scarce', 'Rare', 'Everywhere', 'Singular'],
+          'answer': 'Everywhere',
+        },
+        // New questions added
+        {
+          'question': 'What does "myriad" mean?',
+          'options': ['Limitless', 'Solitary', 'Finite', 'Infinite'],
+          'answer': 'Limitless',
+        },
+        {
+          'question': 'Which word means "to speak or write in favor of"?',
+          'options': ['Advocate', 'Oppose', 'Abstain', 'Resist'],
+          'answer': 'Advocate',
+        },
+        {
+          'question': 'What is the synonym of "ephemeral"?',
+          'options': ['Transient', 'Eternal', 'Permanent', 'Everlasting'],
+          'answer': 'Transient',
+        },
+      ],
+      [
+        {
+          'question': 'What does "gregarious" mean?',
+          'options': [
+            'Friendly and outgoing',
+            'Shy and reserved',
+            'Intelligent and wise',
+            'Careless and thoughtless'
+          ],
+          'answer': 'Friendly and outgoing',
+        },
+        {
+          'question': 'Which word means "to make less severe or harsh"?',
+          'options': ['Intensify', 'Aggravate', 'Mitigate', 'Exacerbate'],
+          'answer': 'Mitigate',
+        },
+        // New questions added
+        {
+          'question': 'What does "conundrum" mean?',
+          'options': ['Problem', 'Solution', 'Clear', 'Confusing'],
+          'answer': 'Problem',
+        },
+        {
+          'question': 'Which word means "to combine or unite"?',
+          'options': ['Divide', 'Separate', 'Merge', 'Dissolve'],
+          'answer': 'Merge',
+        },
+        {
+          'question': 'What is the synonym of "gregarious"?',
+          'options': ['Sociable', 'Reserved', 'Introverted', 'Aloof'],
+          'answer': 'Sociable',
+        },
+      ],
+      [
+        {
+          'question': 'What does "altruistic" mean?',
+          'options': ['Selfish', 'Generous', 'Ambitious', 'Cunning'],
+          'answer': 'Generous',
+        },
+        {
+          'question': 'What is the synonym of "exemplary"?',
+          'options': ['Average', 'Outstanding', 'Mediocre', 'Inferior'],
+          'answer': 'Outstanding',
+        },
+        {
+          'question': 'What is the meaning of "aberration"?',
+          'options': ['Normality', 'Anomaly', 'Predictability', 'Conformity'],
+          'answer': 'Anomaly',
+        },
+        {
+          'question': 'Which word means "to understand or perceive"?',
+          'options': ['Conceive', 'Deceive', 'Perceive', 'Receive'],
+          'answer': 'Perceive',
+        },
+        {
+          'question': 'What is the synonym of "proficient"?',
+          'options': ['Inexperienced', 'Competent', 'Inefficient', 'Amateur'],
+          'answer': 'Competent',
+        },
+      ],
+      [
+        {
+          'question': 'What does "sagacious" mean?',
+          'options': ['Foolish', 'Wise', 'Naive', 'Ruthless'],
+          'answer': 'Wise',
+        },
+        {
+          'question': 'Which word means "to make obscure or unclear"?',
+          'options': ['Illuminate', 'Clarify', 'Obscure', 'Reveal'],
+          'answer': 'Obscure',
+        },
+        {
+          'question': 'What is the synonym of "ephemeral"?',
+          'options': ['Enduring', 'Temporary', 'Permanent', 'Lasting'],
+          'answer': 'Temporary',
+        },
+        {
+          'question': 'What does the term "cogent" mean?',
+          'options': ['Weak', 'Compelling', 'Confusing', 'Irrelevant'],
+          'answer': 'Compelling',
+        },
+        {
+          'question': 'Which word means "to avoid or escape"?',
+          'options': ['Pursue', 'Chase', 'Evade', 'Confront'],
+          'answer': 'Evade',
+        },
+      ],
+      [
+        {
+          'question': 'What does "ephemeral" mean?',
+          'options': ['Lasting', 'Temporary', 'Permanent', 'Enduring'],
+          'answer': 'Temporary',
+        },
+        {
+          'question': 'Which word means "showing great attention to detail"?',
+          'options': ['Careless', 'Meticulous', 'Sloppy', 'Negligent'],
+          'answer': 'Meticulous',
+        },
+        {
+          'question': 'What is the synonym of "lament"?',
+          'options': ['Celebrate', 'Rejoice', 'Mourn', 'Praise'],
+          'answer': 'Mourn',
+        },
+        {
+          'question': 'What does "resilient" mean?',
+          'options': ['Fragile', 'Weak', 'Strong', 'Delicate'],
+          'answer': 'Strong',
+        },
+        {
+          'question': 'Which word means "to make amends for"?',
+          'options': ['Forgive', 'Forget', 'Excuse', 'Redeem'],
+          'answer': 'Redeem',
+        },
+      ],
+      [
+        {
+          'question': 'I’ve put on ______. I eat too many cakes.',
+          'options': ['gloves', 'mixture', 'waist', 'weight'],
+          'answer': 'weight',
+        },
+        {
+          'question': 'It’s so ______ in here. Don’t you ever clean this room?',
+          'options': ['gloves', 'mixture', 'waist', 'weight'],
+          'answer': 'mixture',
+        },
+        {
+          'question': 'Put your suitcase up on the luggage ______.',
+          'options': ['lounge', 'park', 'rack', 'store'],
+          'answer': 'rack',
+        },
+        {
+          'question':
+              'You could hear the crowd shouting in the local football ______.',
+          'options': ['ground', 'park', 'pool', 'station'],
+          'answer': 'ground',
+        },
+        {
+          'question': 'That’ll ______ children! Stop shouting!',
+          'options': ['do', 'fit', 'help', 'make'],
+          'answer': 'fit',
+        },
+      ],
+      [
+        {
+          'question': 'I can’t tell you now. I’ll ______ you know later.',
+          'options': ['get', 'let', 'make', 'tell'],
+          'answer': 'let',
+        },
+        {
+          'question': 'Give me a ______ some time. You know my phone number.',
+          'options': ['date', 'line', 'post', 'ring'],
+          'answer': 'ring',
+        },
+        {
+          'question': 'The bus was so ______ that we couldn’t all get on.',
+          'options': ['crowded', 'deep', 'thick', 'various'],
+          'answer': 'crowded',
+        },
+        {
+          'question':
+              'We have a ______ climate so the winters are never very cold.',
+          'options': ['bright', 'fair', 'high', 'mild'],
+          'answer': 'mild',
+        },
+        {
+          'question':
+              'If you ask a ______ price for your car. I’m sure you’ll sell it.',
+          'options': ['helpful', 'mild', 'reasonable', 'shiny'],
+          'answer': 'reasonable',
+        }
+      ],
+      [
+        {
+          'question': 'No, don’t wear blue. It doesn’t ______ you.',
+          'options': ['fit', 'notice', 'suit', 'take'],
+          'answer': 'suit',
+        },
+        {
+          'question':
+              'The ______ climbed up the tree and we couldn’t see it any more.',
+          'options': ['deer', 'rabbit', 'squirrel', 'tortoise'],
+          'answer': 'squirrel',
+        },
+        {
+          'question': 'Can you ______ me the time, please?',
+          'options': ['say', 'tell', 'speak', 'talk'],
+          'answer': 'tell',
+        },
+        {
+          'question':
+              'Do you know how ______ it is from Ashgabat to Mary? It’s 370 km.',
+          'options': ['many', 'much', 'far', 'often'],
+          'answer': 'far',
+        },
+        {
+          'question':
+              'Can I ______ your phone, please? I must call my parents.',
+          'options': ['borrow', 'use', 'take', 'lend'],
+          'answer': 'borrow',
+        }
+      ],
+      [
+        {
+          'question': 'Don’t go. I’m going to ______ some coffee.',
+          'options': ['make', 'cook', 'boil', 'prepare'],
+          'answer': 'make',
+        },
+        {
+          'question': 'I am ______ my wife to drive a car.',
+          'options': ['learning', 'showing', 'practising', 'teaching'],
+          'answer': 'teaching',
+        },
+        {
+          'question':
+              'I had to keep my son home from school today because he had a ______ of 38.',
+          'options': ['fever', 'headache', 'temperature', 'heat'],
+          'answer': 'temperature',
+        },
+        {
+          'question':
+              'When we were in Spain last year we ______ at a wonderful hotel overlooking the beach.',
+          'options': ['stayed', 'stopped', 'lived', 'left'],
+          'answer': 'stayed',
+        },
+        {
+          'question': 'Is there anything ______ you’d like me to get you?',
+          'options': ['else', 'more', 'extra', 'much'],
+          'answer': 'else',
+        },
+      ],
+      // Add more sets of questions here if needed
+    ];
+
     setState(() {
+      _questions = questionSets[randomIndex];
       _currentQuestionIndex = 0;
       _score = 0;
     });
@@ -509,6 +737,22 @@ class _QuizPageState extends State<QuizPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_questions.isEmpty) {
+      // Quiz not started yet, show initial screen
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Quiz'),
+        ),
+        body: Center(
+          child: ElevatedButton(
+            onPressed: _startQuiz,
+            child: Text('Start Quiz'),
+          ),
+        ),
+      );
+    }
+
+    // Quiz started, continue with quiz content
     if (_currentQuestionIndex >= _questions.length) {
       // Quiz completed, show the score and option to retake the test
       return Scaffold(
@@ -539,6 +783,7 @@ class _QuizPageState extends State<QuizPage> {
       );
     }
 
+    // Display quiz question
     Map<String, dynamic> currentQuestion = _questions[_currentQuestionIndex];
     String question = currentQuestion['question'];
     List<String> options = currentQuestion['options'];
